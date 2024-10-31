@@ -11,9 +11,14 @@ import asyncio
 from threading import Thread
 import uvicorn
 
-connections: list[WebSocket] = []
-last_send_time = 0
+source = 0
+image_size = (896,504)
 framerate = 15
+host = '127.0.0.1'
+port = 15555
+
+last_send_time = 0
+connections: list[WebSocket] = []
 
 async def process(websocket: WebSocket):
     await websocket.accept()
@@ -30,7 +35,8 @@ async def process(websocket: WebSocket):
         logger.error(e)
 
 def convert_image_to_json(image):
-    image = cv2.resize(image, (896,504))
+    global image_size
+    image = cv2.resize(image, image_size)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     im = Image.fromarray(image.astype("uint8"))
     raw_bytes = io.BytesIO()
@@ -54,7 +60,8 @@ async def send_frame(frame: np.ndarray):
         await connection.send_json(message)
 
 def start(app):
-    Thread(target=uvicorn.run, kwargs={"app": app, "host": "127.0.0.1", "port": 15555}, daemon=True).start()
+    global host, port
+    Thread(target=uvicorn.run, kwargs={"app": app, "host": host, "port": port}, daemon=True).start()
 
 async def send_capture(capture):
     while True:
@@ -69,7 +76,8 @@ async def send_capture(capture):
         await send_frame(frame)
 
 if __name__ == "__main__":
-    capture = cv2.VideoCapture(0)
+    global source
+    capture = cv2.VideoCapture(source)
     api = FastAPI()
     api.add_websocket_route("/ws", process)
     start(api)
