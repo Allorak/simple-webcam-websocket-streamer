@@ -1,5 +1,4 @@
 import time
-
 import cv2
 import numpy as np
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
@@ -13,7 +12,6 @@ from threading import Thread
 import uvicorn
 
 connections: list[WebSocket] = []
-api_thread = None
 last_send_time = 0
 framerate = 15
 
@@ -56,7 +54,7 @@ async def send_frame(frame: np.ndarray):
         await connection.send_json(message)
 
 def start(app):
-    api_thread = Thread(target=uvicorn.run, kwargs={"app": app, "host": "127.0.0.1", "port": 15555}, daemon=True).start()
+    Thread(target=uvicorn.run, kwargs={"app": app, "host": "127.0.0.1", "port": 15555}, daemon=True).start()
 
 async def send_capture(capture):
     while True:
@@ -66,7 +64,6 @@ async def send_capture(capture):
             break
 
         if cv2.waitKey(10) & 0xFF == ord('q'):
-            api_thread.join()
             break
 
         await send_frame(frame)
@@ -77,8 +74,5 @@ if __name__ == "__main__":
     api.add_websocket_route("/ws", process)
     start(api)
 
-    from time import sleep
-
-    sleep(2)
     asyncio.get_event_loop().run_until_complete(send_capture(capture))
 
