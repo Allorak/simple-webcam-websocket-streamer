@@ -1,0 +1,6 @@
+opencv-python
+fastapi
+loguru
+pillow
+uvicorn
+websockets
