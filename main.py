@@ -11,7 +11,6 @@ import asyncio
 from threading import Thread
 import uvicorn
 
-source = 0
 image_size = (896,504)
 framerate = 15
 host = '127.0.0.1'
@@ -76,7 +75,7 @@ async def send_capture(capture):
         await send_frame(frame)
 
 if __name__ == "__main__":
-    global source
+    source = 0
     capture = cv2.VideoCapture(source)
     api = FastAPI()
     api.add_websocket_route("/ws", process)
