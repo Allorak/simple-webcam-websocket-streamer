@@ -31,7 +31,7 @@ async def process(websocket: WebSocket):
             message = json.loads(data)
             logger.info(message)
     except WebSocketDisconnect as e:
-        logger.error(e)
+        connections.remove(websocket)
 
 def convert_image_to_json(image):
     global image_size
