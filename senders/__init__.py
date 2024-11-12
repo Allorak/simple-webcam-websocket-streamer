@@ -6,3 +6,4 @@ from .graph_sender import GraphSender
 from .player_change_sender import PlayerChangeSender
 from .all_scores_sender import AllScoresSender
 from .player_list_sender import PlayerListSender
+from .highlight_sender import HighlightSender
