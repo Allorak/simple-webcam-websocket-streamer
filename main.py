@@ -40,7 +40,8 @@ async def lifespan(app: FastAPI):
             pass
 
 if __name__ == "__main__":
-    capture = cv2.VideoCapture(0)
+    source = 0
+    capture = cv2.VideoCapture(source)
 
     senders_list.append(FrameSender(capture))
     senders_list.append(PeopleSender())
