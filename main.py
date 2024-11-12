@@ -5,7 +5,7 @@ import json
 from loguru import logger
 from contextlib import asynccontextmanager
 import cv2
-from senders import AbstractSender, FrameSender, PoseSender, PlayerScoreSender
+from senders import AbstractSender, FrameSender, PoseSender, PlayerScoreSender, GraphSender
 
 senders_list: list[AbstractSender] = []
 
@@ -26,25 +26,26 @@ async def process(websocket: WebSocket):
         for sender in senders_list:
             await sender.remove_connection(websocket)
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    tasks = [asyncio.create_task(sender.start()) for sender in senders_list]
+
+    yield
+
+    for task in tasks:
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+
 if __name__ == "__main__":
     capture = cv2.VideoCapture(0)
     senders_list.append(FrameSender(capture))
-    senders_list.append(PoseSender(framerate=5))
+    senders_list.append(PoseSender(framerate=3))
     senders_list.append(PlayerScoreSender(framerate=0.3))
-
-    @asynccontextmanager
-    async def lifespan(app: FastAPI):
-        tasks = [asyncio.create_task(sender.start()) for sender in senders_list]
-
-        yield
-
-        for task in tasks:
-            task.cancel()
-            try:
-                await task
-            except asyncio.CancelledError:
-                pass
-
+    senders_list.append(GraphSender(framerate=3))
+    senders_list.append(PlayerScoreSender())
 
     host = '127.0.0.1'
     port = 15555
