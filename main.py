@@ -1,29 +1,21 @@
-import time
-import cv2
-import numpy as np
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from loguru import logger
-import json
-from PIL import Image
-import io
-import base64
 import asyncio
-from threading import Thread
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 import uvicorn
+import json
+from loguru import logger
+from contextlib import asynccontextmanager
+import cv2
+from senders import AbstractSender, FrameSender, PoseSender, PlayerScoreSender
 
-image_size = (896,504)
-framerate = 15
-host = '127.0.0.1'
-port = 15555
-
-last_send_time = 0
-connections: list[WebSocket] = []
+senders_list: list[AbstractSender] = []
 
 async def process(websocket: WebSocket):
     await websocket.accept()
 
-    global connections
-    connections.append(websocket)
+    global senders_list
+
+    for sender in senders_list:
+        await sender.add_connection(websocket)
 
     try:
         while True:
@@ -31,55 +23,33 @@ async def process(websocket: WebSocket):
             message = json.loads(data)
             logger.info(message)
     except WebSocketDisconnect as e:
-        connections.remove(websocket)
-
-def convert_image_to_json(image):
-    global image_size
-    image = cv2.resize(image, image_size)
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    im = Image.fromarray(image.astype("uint8"))
-    raw_bytes = io.BytesIO()
-    im.save(raw_bytes, "JPEG")
-    raw_bytes.seek(0)
-    return base64.b64encode(raw_bytes.read()).decode("utf-8")
-
-
-async def send_frame(frame: np.ndarray):
-    message = convert_image_to_json(frame)
-
-    global last_send_time, framerate
-
-    if time.time() - last_send_time < 1/framerate:
-        return
-
-    last_send_time = time.time()
-
-    global connections
-    for connection in connections:
-        await connection.send_json(message)
-
-def start(app):
-    global host, port
-    Thread(target=uvicorn.run, kwargs={"app": app, "host": host, "port": port}, daemon=True).start()
-
-async def send_capture(capture):
-    while True:
-        ret, frame = capture.read()
-
-        if not ret:
-            break
-
-        if cv2.waitKey(10) & 0xFF == ord('q'):
-            break
-
-        await send_frame(frame)
+        for sender in senders_list:
+            await sender.remove_connection(websocket)
 
 if __name__ == "__main__":
-    source = 0
-    capture = cv2.VideoCapture(source)
-    api = FastAPI()
-    api.add_websocket_route("/ws", process)
-    start(api)
+    capture = cv2.VideoCapture(0)
+    senders_list.append(FrameSender(capture))
+    senders_list.append(PoseSender(framerate=5))
+    senders_list.append(PlayerScoreSender(framerate=0.3))
 
-    asyncio.get_event_loop().run_until_complete(send_capture(capture))
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        tasks = [asyncio.create_task(sender.start()) for sender in senders_list]
+
+        yield
+
+        for task in tasks:
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+
+
+    host = '127.0.0.1'
+    port = 15555
+    api = FastAPI(lifespan=lifespan)
+    api.add_websocket_route("/ws", process)
+
+    uvicorn.run(api, host=host, port=port)
 
