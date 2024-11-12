@@ -5,7 +5,7 @@ import json
 from loguru import logger
 from contextlib import asynccontextmanager
 import cv2
-from senders import AbstractSender, FrameSender, PoseSender, PlayerScoreSender, GraphSender
+from senders import AbstractSender, FrameSender, PoseSender, PlayerScoreSender, GraphSender, PlayerChangeSender
 
 senders_list: list[AbstractSender] = []
 
@@ -42,10 +42,10 @@ async def lifespan(app: FastAPI):
 if __name__ == "__main__":
     capture = cv2.VideoCapture(0)
     senders_list.append(FrameSender(capture))
-    senders_list.append(PoseSender(framerate=3))
-    senders_list.append(PlayerScoreSender(framerate=0.3))
-    senders_list.append(GraphSender(framerate=3))
+    senders_list.append(PoseSender())
     senders_list.append(PlayerScoreSender())
+    senders_list.append(GraphSender())
+    senders_list.append(PlayerChangeSender())
 
     host = '127.0.0.1'
     port = 15555

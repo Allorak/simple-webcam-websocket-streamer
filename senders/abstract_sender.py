@@ -6,7 +6,7 @@ import asyncio
 
 
 class AbstractSender(ABC):
-    def __init__(self, framerate: float = 15):
+    def __init__(self, framerate):
         self.delay = 1 / framerate
         self.connections: list[WebSocket] = []
 

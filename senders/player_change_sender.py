@@ -1,28 +1,13 @@
 import json
 
 from senders import AbstractSender
-import time
 import random
-import asyncio
 
 
 class PlayerChangeSender(AbstractSender):
-    def __init__(self, framerate: float = 15, player_change_chance: float = 0.001):
+    def __init__(self, framerate: float = 1/30):
         super().__init__(framerate)
-        self.player_change_chance = player_change_chance
         self.players_list = ["Имя Фамилия", "Иван Иванов", "Player Player", "Василий Пупкин"]
-
-    async def send(self):
-        if time.time() - self.last_send_time < self.delay:
-            return
-
-        self.last_send_time = time.time()
-
-        if random.random() <= self.player_change_chance:
-            for connection in self.connections:
-                await connection.send_json(self.create_message())
-
-        await asyncio.sleep(0.01)
 
     def create_message(self) -> str:
         message = {

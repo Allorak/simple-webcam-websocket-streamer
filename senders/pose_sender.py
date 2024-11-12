@@ -5,7 +5,7 @@ from senders import AbstractSender
 
 
 class PoseSender(AbstractSender):
-    def __init__(self, framerate: float = 15):
+    def __init__(self, framerate: float = 3):
         super().__init__(framerate)
 
     def create_message(self) -> str:

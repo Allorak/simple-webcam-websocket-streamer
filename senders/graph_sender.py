@@ -6,7 +6,7 @@ from senders import AbstractSender
 
 
 class GraphSender(AbstractSender):
-    def __init__(self, framerate: float = 15, high_value_chance = 0.05, low_amplitude = 10, high_amplitude = 50):
+    def __init__(self, framerate: float = 3, high_value_chance = 0.05, low_amplitude = 10, high_amplitude = 50):
         super().__init__(framerate)
 
         self.magnitudes = deque(maxlen=50)
