@@ -5,7 +5,9 @@ import json
 from loguru import logger
 from contextlib import asynccontextmanager
 import cv2
-from senders import AbstractSender, FrameSender, PoseSender, PlayerScoreSender, GraphSender, PlayerChangeSender
+from senders import AbstractSender, FrameSender, PoseSender, PlayerScoreSender, GraphSender, PlayerChangeSender, \
+    AllScoresSender
+from senders.player_list_sender import PlayerListSender
 
 senders_list: list[AbstractSender] = []
 
@@ -46,6 +48,8 @@ if __name__ == "__main__":
     senders_list.append(PlayerScoreSender())
     senders_list.append(GraphSender())
     senders_list.append(PlayerChangeSender())
+    senders_list.append(PlayerListSender())
+    senders_list.append(AllScoresSender())
 
     host = '127.0.0.1'
     port = 15555
