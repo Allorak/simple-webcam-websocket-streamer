@@ -63,4 +63,10 @@ class PeopleSender(AbstractSender):
     def move_bounding_box(self, bounding_box: list[float]) -> None:
         for i in range(1,5):
             bounding_box[i] = np.clip(bounding_box[i] + (random.random() * 2 - 1) * self.move_speed, 0, 1)
+            
+        if bounding_box[1] + bounding_box[3] > 1:
+            bounding_box[3] = 1 - bounding_box[1]
+        
+        if bounding_box[2] + bounding_box[4] > 1:
+            bounding_box[4] = 1 - bounding_box[2]
 
