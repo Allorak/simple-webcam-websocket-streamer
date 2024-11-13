@@ -1,6 +1,7 @@
 from senders import AbstractSender
 import random
 import json
+import numpy as np
 
 
 class PeopleSender(AbstractSender):
@@ -52,16 +53,14 @@ class PeopleSender(AbstractSender):
         x = random.random()
         y = random.random()
 
-        width = random.random() * (1 - x)
-        height = random.random() * (1 - y)
+        width = abs(random.random() * (1 - x))
+        height = abs(random.random() * (1 - y))
 
         self.index += 1
 
         return [self.index, x, y, width, height]
 
     def move_bounding_box(self, bounding_box: list[float]) -> None:
-        bounding_box[1] += (random.random() * 2 - 1) * self.move_speed
-        bounding_box[2] += (random.random() * 2 - 1) * self.move_speed
-        bounding_box[3] += (random.random() * 2 - 1) * self.move_speed
-        bounding_box[4] += (random.random() * 2 - 1) * self.move_speed
+        for i in range(1,5):
+            bounding_box[i] = np.clip(bounding_box[i] + (random.random() * 2 - 1) * self.move_speed, 0, 1)
 
